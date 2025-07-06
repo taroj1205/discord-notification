@@ -41,6 +41,7 @@ runs:
   using: 'composite'
   steps:
     - name: Make entrypoint script executable
+      shell: bash
       run: chmod +x .github/actions/send-notification/entrypoint.sh
 
     - name: Send Discord Notification
