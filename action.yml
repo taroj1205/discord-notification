@@ -1,52 +1,54 @@
-name: 'Send Discord Notification'
-description: 'Constructs and sends a rich embed notification to a Discord webhook.'
+name: 'Discord Notification'
+description: 'Sends a rich, customizable Discord notification for GitHub Actions events.'
+author: 'taroj1205'
+
+branding:
+  icon: 'bell'
+  color: 'blue'
 
 inputs:
   webhook_url:
     description: 'The Discord webhook URL.'
     required: true
   color:
-    description: 'The color of the embed.'
-    required: true
+    description: 'The decimal color of the embed.'
+    required: false
+    default: '3447003' # Blue
   title:
     description: 'The title of the embed.'
     required: true
   description:
-    description: 'The description of the embed.'
+    description: 'The description of the embed. Supports GitHub-flavored markdown.'
     required: true
   url:
     description: 'The URL the embed title links to.'
-    required: true
+    required: false
   image_url:
     description: 'The URL of the main image in the embed.'
     required: false
   author_name:
     description: 'The name of the embed author.'
-    required: true
+    required: false
   author_url:
     description: 'The URL of the embed author.'
-    required: true
+    required: false
   author_icon_url:
     description: 'The icon URL of the embed author.'
-    required: true
+    required: false
   button_label:
-    description: "The label for the button"
-    required: true
-    default: "View Pull Request"
+    description: "The label for the button. The button will only be shown if a URL is also provided."
+    required: false
+    default: "View Details"
   branch_info:
-    description: 'The branch information (e.g., `head` -> `base`).'
+    description: 'The branch information to display in a field (e.g., `head` -> `base`).'
     required: false
 
 runs:
   using: 'composite'
   steps:
-    - name: Make entrypoint script executable
-      shell: bash
-      run: chmod +x .github/actions/send-notification/entrypoint.sh
-
     - name: Send Discord Notification
       shell: bash
-      run: ${{ github.action_path }}/entrypoint.sh
+      run: ${{ github.action_path }}/send-notification.sh
       env:
         INPUT_WEBHOOK_URL: ${{ inputs.webhook_url }}
         INPUT_COLOR: ${{ inputs.color }}
