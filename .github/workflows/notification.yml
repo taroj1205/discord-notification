@@ -10,34 +10,20 @@ jobs:
     steps:
       - name: Send notification on PR Opened or Ready for Review
         if: github.event.pull_request.draft == false && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review')
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          AUTHOR_NAME: ${{ github.event.pull_request.user.login }}
-          AUTHOR_URL: ${{ github.event.pull_request.user.html_url }}
-          AUTHOR_ICON_URL: ${{ github.event.pull_request.user.avatar_url }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          GITHUB_OG_IMAGE_URL: https://opengraph.githubassets.com/1/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
         run: |
-          # Using printf to handle newlines correctly for the description.
-          DESCRIPTION=$(printf "**%s** submitted a pull request for review.\n\n%s" "$AUTHOR_NAME" "$PR_BODY")
-          # Discord has a 4096 character limit for embed descriptions.
-          TRUNCATED_DESCRIPTION=$(echo "$DESCRIPTION" | head -c 4000)
+          # Using printf to handle newlines correctly and truncate the description.
+          DESCRIPTION=$(printf "**%s** submitted a pull request for review.\n\n%s" "${{ github.event.pull_request.user.login }}" "${{ github.event.pull_request.body }}" | head -c 4000)
 
-          # Base JSON payload
-          JSON_PAYLOAD_BASE=$(jq -n \
-            --arg title "PR Ready for Review: $PR_TITLE" \
-            --arg description "$TRUNCATED_DESCRIPTION" \
-            --arg url "$PR_URL" \
+          JSON_PAYLOAD=$(jq -n \
+            --arg title "PR Ready for Review: ${{ github.event.pull_request.title }}" \
+            --arg description "$DESCRIPTION" \
+            --arg url "${{ github.event.pull_request.html_url }}" \
             --argjson color 3447003 \
-            --arg author_name "$AUTHOR_NAME" \
-            --arg author_url "$AUTHOR_URL" \
-            --arg author_icon_url "$AUTHOR_ICON_URL" \
-            --arg head_ref "$HEAD_REF" \
-            --arg base_ref "$BASE_REF" \
+            --arg author_name "${{ github.event.pull_request.user.login }}" \
+            --arg author_url "${{ github.event.pull_request.user.html_url }}" \
+            --arg author_icon_url "${{ github.event.pull_request.user.avatar_url }}" \
+            --arg head_ref "${{ github.event.pull_request.head.ref }}" \
+            --arg base_ref "${{ github.event.pull_request.base.ref }}" \
             '{
               "embeds": [
                 {
@@ -46,6 +32,7 @@ jobs:
                   "url": $url,
                   "color": $color,
                   "author": { "name": $author_name, "url": $author_url, "icon_url": $author_icon_url },
+                  "thumbnail": { "url": $author_icon_url },
                   "fields": [
                     { "name": "Branch", "value": "`\($head_ref)` -> `\($base_ref)`", "inline": false }
                   ]
@@ -61,14 +48,7 @@ jobs:
               ]
             }')
 
-          # Add image to payload if one was found
-          if [ -n "$GITHUB_OG_IMAGE_URL" ]; then
-            FINAL_JSON=$(echo "$JSON_PAYLOAD_BASE" | jq --arg image_url "$GITHUB_OG_IMAGE_URL" '.embeds[0].image = {"url": $image_url}')
-          else
-            FINAL_JSON="$JSON_PAYLOAD_BASE"
-          fi
-
-          curl -X POST -H "Content-Type: application/json" -d "$FINAL_JSON" "$DISCORD_WEBHOOK_URL?with_components=true"
+          curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "${{ secrets.DISCORD_WEBHOOK_URL }}?with_components=true"
 
       - name: Send notification on PR Merged
         if: github.event.action == 'closed' && github.event.pull_request.merged == true
@@ -85,7 +65,8 @@ jobs:
                   "name": "${{ github.event.pull_request.user.login }}",
                   "url": "${{ github.event.pull_request.user.html_url }}",
                   "icon_url": "${{ github.event.pull_request.user.avatar_url }}"
-                }
+                },
+                "thumbnail": { "url": "${{ github.event.pull_request.user.avatar_url }}" }
               }
             ],
             "components": [
@@ -119,7 +100,8 @@ jobs:
                   "name": "${{ github.event.pull_request.user.login }}",
                   "url": "${{ github.event.pull_request.user.html_url }}",
                   "icon_url": "${{ github.event.pull_request.user.avatar_url }}"
-                }
+                },
+                "thumbnail": { "url": "${{ github.event.pull_request.user.avatar_url }}" }
               }
             ],
             "components": [
