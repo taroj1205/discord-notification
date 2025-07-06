@@ -8,135 +8,49 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Send notification on PR Opened or Ready for Review
         if: github.event.pull_request.draft == false && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review')
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          AUTHOR_NAME: ${{ github.event.pull_request.user.login }}
-          AUTHOR_URL: ${{ github.event.pull_request.user.html_url }}
-          AUTHOR_ICON_URL: ${{ github.event.pull_request.user.avatar_url }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: |
-          DESCRIPTION="**$AUTHOR_NAME** submitted a pull request for review.\n\n$PR_BODY"
-          # Discord has a 4096 character limit for embed descriptions.
-          TRUNCATED_DESCRIPTION=$(echo "$DESCRIPTION" | head -c 4000)
-
-          JSON_PAYLOAD=$(jq -n \
-            --arg title "PR Ready for Review: $PR_TITLE" \
-            --arg description "$TRUNCATED_DESCRIPTION" \
-            --arg url "$PR_URL" \
-            --argjson color 3447003 \
-            --arg author_name "$AUTHOR_NAME" \
-            --arg author_url "$AUTHOR_URL" \
-            --arg author_icon_url "$AUTHOR_ICON_URL" \
-            --arg head_ref "$HEAD_REF" \
-            --arg base_ref "$BASE_REF" \
-            '{
-              "embeds": [
-                {
-                  "title": $title,
-                  "description": $description,
-                  "url": $url,
-                  "color": $color,
-                  "author": {
-                    "name": $author_name,
-                    "url": $author_url,
-                    "icon_url": $author_icon_url
-                  },
-                  "fields": [
-                    {
-                      "name": "Branch",
-                      "value": "`\($head_ref)` -> `\($base_ref)`",
-                      "inline": false
-                    }
-                  ]
-                }
-              ],
-              "components": [
-                {
-                  "type": 1,
-                  "components": [
-                    {
-                      "type": 2,
-                      "label": "View Pull Request",
-                      "style": 5,
-                      "url": $url
-                    }
-                  ]
-                }
-              ]
-            }')
-
-          curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_URL?with_components=true"
+        uses: ./.github/actions/send-notification
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          color: 3447003 # Blue
+          title: 'PR Ready for Review: ${{ github.event.pull_request.title }}'
+          description: |
+            ${{ github.event.pull_request.body }}
+          url: ${{ github.event.pull_request.html_url }}
+          image_url: 'https://opengraph.githubassets.com/${{ github.sha }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          author_name: ${{ github.event.pull_request.user.login }}
+          author_url: ${{ github.event.pull_request.user.html_url }}
+          author_icon_url: ${{ github.event.pull_request.user.avatar_url }}
+          branch_info: '`${{ github.event.pull_request.head.ref }}` -> `${{ github.event.pull_request.base.ref }}`'
 
       - name: Send notification on PR Merged
         if: github.event.action == 'closed' && github.event.pull_request.merged == true
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-          -d '{
-            "embeds": [
-              {
-                "title": "PR Merged: ${{ github.event.pull_request.title }}",
-                "description": "The pull request was merged by **${{ github.event.pull_request.merged_by.login }}**.",
-                "url": "${{ github.event.pull_request.html_url }}",
-                "color": 3066993,
-                "author": {
-                  "name": "${{ github.event.pull_request.user.login }}",
-                  "url": "${{ github.event.pull_request.user.html_url }}",
-                  "icon_url": "${{ github.event.pull_request.user.avatar_url }}"
-                }
-              }
-            ],
-            "components": [
-              {
-                "type": 1,
-                "components": [
-                  {
-                    "type": 2,
-                    "label": "View Merged PR",
-                    "style": 5,
-                    "url": "${{ github.event.pull_request.html_url }}"
-                  }
-                ]
-              }
-            ]
-          }' \
-          "${{ secrets.DISCORD_WEBHOOK_URL }}?with_components=true"
+        uses: ./.github/actions/send-notification
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          color: 3066993 # Green
+          title: 'PR Merged: ${{ github.event.pull_request.title }}'
+          description: 'The pull request was merged by **${{ github.event.pull_request.merged_by.login }}**.'
+          url: ${{ github.event.pull_request.html_url }}
+          author_name: ${{ github.event.pull_request.user.login }}
+          author_url: ${{ github.event.pull_request.user.html_url }}
+          author_icon_url: ${{ github.event.pull_request.user.avatar_url }}
+          button_label: 'View Merged PR'
 
       - name: Send notification on PR Closed
         if: github.event.action == 'closed' && github.event.pull_request.merged == false
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-          -d '{
-            "embeds": [
-              {
-                "title": "PR Closed: ${{ github.event.pull_request.title }}",
-                "description": "The pull request was closed without merging.",
-                "url": "${{ github.event.pull_request.html_url }}",
-                "color": 15158332,
-                "author": {
-                  "name": "${{ github.event.pull_request.user.login }}",
-                  "url": "${{ github.event.pull_request.user.html_url }}",
-                  "icon_url": "${{ github.event.pull_request.user.avatar_url }}"
-                }
-              }
-            ],
-            "components": [
-              {
-                "type": 1,
-                "components": [
-                  {
-                    "type": 2,
-                    "label": "View Closed PR",
-                    "style": 5,
-                    "url": "${{ github.event.pull_request.html_url }}"
-                  }
-                ]
-              }
-            ]
-          }' \
-          "${{ secrets.DISCORD_WEBHOOK_URL }}?with_components=true"
+        uses: ./.github/actions/send-notification
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          color: 15158332 # Red
+          title: 'PR Closed: ${{ github.event.pull_request.title }}'
+          description: 'The pull request was closed without merging.'
+          url: ${{ github.event.pull_request.html_url }}
+          author_name: ${{ github.event.pull_request.user.login }}
+          author_url: ${{ github.event.pull_request.user.html_url }}
+          author_icon_url: ${{ github.event.pull_request.user.avatar_url }}
+          button_label: 'View Closed PR'
