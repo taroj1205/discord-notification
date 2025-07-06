@@ -13,7 +13,18 @@ jobs:
         run: |
           cat <<EOF > payload.json
           {
-            "content": "Pull request opened: **${{ github.event.pull_request.title }}**",
+            "embeds": [
+              {
+                "author": {
+                  "name": "${{ github.event.pull_request.user.login }}",
+                  "url": "${{ github.event.pull_request.user.html_url }}",
+                  "icon_url": "${{ github.event.pull_request.user.avatar_url }}"
+                },
+                "title": "New Pull Request: ${{ github.event.pull_request.title }}",
+                "url": "${{ github.event.pull_request.html_url }}",
+                "color": 3447003
+              }
+            ],
             "components": [
               {
                 "type": 1,
@@ -43,7 +54,18 @@ jobs:
         run: |
           cat <<EOF > payload.json
           {
-            "content": "Pull request is now ready for review: **${{ github.event.pull_request.title }}**",
+            "embeds": [
+              {
+                "author": {
+                  "name": "${{ github.event.pull_request.user.login }}",
+                  "url": "${{ github.event.pull_request.user.html_url }}",
+                  "icon_url": "${{ github.event.pull_request.user.avatar_url }}"
+                },
+                "title": "Ready for Review: ${{ github.event.pull_request.title }}",
+                "url": "${{ github.event.pull_request.html_url }}",
+                "color": 15105570
+              }
+            ],
             "components": [
               {
                 "type": 1,
@@ -73,7 +95,18 @@ jobs:
         run: |
           cat <<EOF > payload.json
           {
-            "content": "Pull request merged: **${{ github.event.pull_request.title }}**"
+            "embeds": [
+              {
+                "author": {
+                  "name": "${{ github.event.pull_request.merged_by.login || github.event.pull_request.user.login }}",
+                  "url": "${{ github.event.pull_request.merged_by.html_url || github.event.pull_request.user.html_url }}",
+                  "icon_url": "${{ github.event.pull_request.merged_by.avatar_url || github.event.pull_request.user.avatar_url }}"
+                },
+                "title": "Pull Request Merged: ${{ github.event.pull_request.title }}",
+                "url": "${{ github.event.pull_request.html_url }}",
+                "color": 5763719
+              }
+            ]
           }
           EOF
       - name: Discord Webhook Action
