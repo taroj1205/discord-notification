@@ -48,7 +48,9 @@ runs:
   steps:
     - name: Send Discord Notification
       shell: bash
-      run: ${{ github.action_path }}/send-notification.sh
+      run: |
+        chmod +x ${{ github.action_path }}/send-notification.sh
+        ${{ github.action_path }}/send-notification.sh
       env:
         INPUT_WEBHOOK_URL: ${{ inputs.webhook_url }}
         INPUT_COLOR: ${{ inputs.color }}
