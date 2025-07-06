@@ -8,7 +8,7 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout branch
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Send notification on PR Opened or Ready for Review
