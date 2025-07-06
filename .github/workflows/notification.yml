@@ -20,14 +20,12 @@ jobs:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_OG_IMAGE_URL: https://opengraph.githubassets.com/1/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
         run: |
           # Using printf to handle newlines correctly for the description.
           DESCRIPTION=$(printf "**%s** submitted a pull request for review.\n\n%s" "$AUTHOR_NAME" "$PR_BODY")
           # Discord has a 4096 character limit for embed descriptions.
           TRUNCATED_DESCRIPTION=$(echo "$DESCRIPTION" | head -c 4000)
-
-          # Extract the first markdown image URL from the PR body to use as the embed image.
-          IMAGE_URL=$(echo "$PR_BODY" | sed -n 's/.*!\[[^]]*\](\([^)]*\)).*/\1/p' | head -n 1)
 
           # Base JSON payload
           JSON_PAYLOAD_BASE=$(jq -n \
@@ -64,8 +62,8 @@ jobs:
             }')
 
           # Add image to payload if one was found
-          if [ -n "$IMAGE_URL" ]; then
-            FINAL_JSON=$(echo "$JSON_PAYLOAD_BASE" | jq --arg image_url "$IMAGE_URL" '.embeds[0].image = {"url": $image_url}')
+          if [ -n "$GITHUB_OG_IMAGE_URL" ]; then
+            FINAL_JSON=$(echo "$JSON_PAYLOAD_BASE" | jq --arg image_url "$GITHUB_OG_IMAGE_URL" '.embeds[0].image = {"url": $image_url}')
           else
             FINAL_JSON="$JSON_PAYLOAD_BASE"
           fi
