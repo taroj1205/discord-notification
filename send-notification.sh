@@ -19,7 +19,6 @@ JSON_PAYLOAD=$(jq -n \
   --arg button_label "$INPUT_BUTTON_LABEL" \
   --arg branch_info "$INPUT_BRANCH_INFO" \
   '
-    # Start with the required fields for the embed
     {
       "embeds": [
         {
@@ -27,24 +26,24 @@ JSON_PAYLOAD=$(jq -n \
           "description": $description,
           "color": $color
         }
+        + (if $url != "" then {url: $url} else {} end)
+        + (if $image_url != "" then {image: {url: $image_url}} else {} end)
+        + (if $author_name != "" then {author: {name: $author_name, url: $author_url, icon_url: $author_icon_url}} else {} end)
+        + (if $branch_info != "" then {fields: [{name: "Branch", value: $branch_info, inline: false}]} else {} end)
       ]
     }
-
-    # Conditionally add optional fields to the embed
-    | if $url != null and $url != "" then .embeds[0].url = $url else . end
-    | if $image_url != null and $image_url != "" then .embeds[0].image = {"url": $image_url} else . end
-    | if $branch_info != null and $branch_info != "" then .embeds[0].fields = [{"name": "Branch", "value": $branch_info, "inline": false}] else . end
-    | if $author_name != null and $author_name != "" then .embeds[0].author = {"name": $author_name, "url": $author_url, "icon_url": $author_icon_url} else . end
-
-    # Conditionally add the button component
-    | if $url != null and $url != "" then .components = [
-        {
-          "type": 1,
-          "components": [
-            { "type": 2, "label": $button_label, "style": 5, "url": $url }
-          ]
-        }
-      ] else . end
+    + (if $url != "" then
+      {
+        "components": [
+          {
+            "type": 1,
+            "components": [
+              { "type": 2, "label": $button_label, "style": 5, "url": $url }
+            ]
+          }
+        ]
+      }
+      else {} end)
   ')
 
 # Send the payload to the Discord webhook URL.
