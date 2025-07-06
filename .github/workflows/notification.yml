@@ -1,0 +1,83 @@
+name: Pull Request Notifications
+
+on:
+  pull_request:
+    types: [opened, reopened, closed, ready_for_review]
+
+jobs:
+  pull_request_opened:
+    if: github.event.pull_request.draft == false && (github.event.action == 'opened' || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create JSON payload
+        run: |
+          cat <<EOF > payload.json
+          {
+            "content": "Pull request opened: **${{ github.event.pull_request.title }}**",
+            "components": [
+              {
+                "type": 1,
+                "components": [
+                  {
+                    "type": 2,
+                    "style": 5,
+                    "label": "View Pull Request",
+                    "url": "${{ github.event.pull_request.html_url }}"
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+      - name: Discord Webhook Action
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          raw-data: ./payload.json
+
+  pull_request_ready_for_review:
+    if: github.event.action == 'ready_for_review'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create JSON payload
+        run: |
+          cat <<EOF > payload.json
+          {
+            "content": "Pull request is now ready for review: **${{ github.event.pull_request.title }}**",
+            "components": [
+              {
+                "type": 1,
+                "components": [
+                  {
+                    "type": 2,
+                    "style": 5,
+                    "label": "View Pull Request",
+                    "url": "${{ github.event.pull_request.html_url }}"
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+      - name: Discord Webhook Action
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          raw-data: ./payload.json
+
+  pull_request_merged:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create JSON payload
+        run: |
+          cat <<EOF > payload.json
+          {
+            "content": "Pull request merged: **${{ github.event.pull_request.title }}**"
+          }
+          EOF
+      - name: Discord Webhook Action
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          raw-data: ./payload.json
