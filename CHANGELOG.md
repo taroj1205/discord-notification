@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/taroj1205/discord-notification/compare/v1.0.0...v1.1.0) (2025-07-07)
+
+
+### Features
+
+* **discord:** add description length limit ([#17](https://github.com/taroj1205/discord-notification/issues/17)) ([0d17b3c](https://github.com/taroj1205/discord-notification/commit/0d17b3cfe701c99537464521961152c9294f442b))
+* **env,example:** add env.example to for local testing ([#15](https://github.com/taroj1205/discord-notification/issues/15)) ([79bf66c](https://github.com/taroj1205/discord-notification/commit/79bf66cf01012e36449f354bd8a22ae07ead280f))
+
 ## 1.0.0 (2025-07-06)
 
 
