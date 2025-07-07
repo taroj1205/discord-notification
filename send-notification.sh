@@ -10,6 +10,7 @@ set -euo pipefail
 JSON_PAYLOAD=$(jq -n \
   --arg title "$INPUT_TITLE" \
   --arg description "$INPUT_DESCRIPTION" \
+  --arg description_max_length "${INPUT_DESCRIPTION_MAX_LENGTH:-}" \
   --argjson color "$INPUT_COLOR" \
   --arg url "$INPUT_URL" \
   --arg image_url "$INPUT_IMAGE_URL" \
@@ -23,7 +24,22 @@ JSON_PAYLOAD=$(jq -n \
       "embeds": [
         {
           "title": $title,
-          "description": $description,
+          "description": (
+            if ($description_max_length | test("^[0-9]+$")) and (($description_max_length | tonumber) > 0) then
+              ($description_max_length | tonumber) as $max_length |
+              if ($description | length) > $max_length then
+                if $max_length > 3 then
+                  ($description | .[0:$max_length - 3]) + "..."
+                else
+                  $description | .[0:$max_length]
+                end
+              else
+                $description
+              end
+            else
+              $description
+            end
+          ),
           "color": $color
         }
         + (if $url != "" then {url: $url} else {} end)

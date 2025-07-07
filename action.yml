@@ -20,6 +20,9 @@ inputs:
   description:
     description: 'The description of the embed. Supports GitHub-flavored markdown.'
     required: true
+  description_max_length:
+    description: 'The maximum number of characters for the description. The description will be truncated with an ellipsis (...) if it exceeds this limit.'
+    required: false
   url:
     description: 'The URL the embed title links to.'
     required: false
@@ -56,6 +59,7 @@ runs:
         INPUT_COLOR: ${{ inputs.color }}
         INPUT_TITLE: ${{ inputs.title }}
         INPUT_DESCRIPTION: ${{ inputs.description }}
+        INPUT_DESCRIPTION_MAX_LENGTH: ${{ inputs.description_max_length }}
         INPUT_URL: ${{ inputs.url }}
         INPUT_IMAGE_URL: ${{ inputs.image_url }}
         INPUT_AUTHOR_NAME: ${{ inputs.author_name }}
