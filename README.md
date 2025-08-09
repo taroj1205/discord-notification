@@ -2,7 +2,7 @@
 
 A fast, flexible, and lightweight GitHub Action to send highly customizable notifications to a Discord channel using webhooks.
 
-![Example Notification](https://opengraph.githubassets.com/9fe2bf92b5205d884ef2bbe4983f04525ec921e1d417354ca54b89597c7e1e3f/taroj1205/discord-notification/pull/13)
+![Example Notification](https://github.com/user-attachments/assets/e49e2f59-bc10-4554-9b2d-867870370488)
 
 ## ✨ Features
 
